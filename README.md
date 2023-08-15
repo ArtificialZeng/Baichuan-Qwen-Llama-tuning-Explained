@@ -1,6 +1,6 @@
 # Baichuan-Qwen-Llama-tuning-Explained
 Baichuan-Qwen-Llama-tuning-Explained
-
+说明：从Llama-Efficient-Tuning项目Fork而来，同时可以训练Baichuan、千问等，本项目是对其逐行代码的解析，更新中...
 
 # Llama-Efficient-Tuning-Explained
 
@@ -8,18 +8,8 @@ Llama-Efficient-Tuning-相关代码，逐行详解版。
 
 
 * [src/](./src)
-  * [utils/](./src/utils)
-    * [common.py](./src/utils/common.py)
-      * init_adapter（）
-      * load_pretrained()
-      * prepare_args()
-    * [peft_trainer.py  （定义LogCallback、PeftTrainer）](./src/utils/peft_trainer.py)
-    * [data_collator.py（DataCollatorForLlama类）](./src/utils/data_collator.py)
-    * [seq2seq.py  （ComputeMetrics、Seq2SeqTrainerForLlama)](./src/utils/seq2seq.py)
-  * [train_sft.py（导入DataCollatorForLlama、Seq2SeqTrainerForLlama)](./src/train_sft.py)
-* [examples/](./examples)
-  * [ads_generation.md（分布式运行范例）](./examples/ads_generation.md)
-* [README.md](./README.md)
+  * [api_demo.py](/src/api_demo.py)
+  
 
 
 
