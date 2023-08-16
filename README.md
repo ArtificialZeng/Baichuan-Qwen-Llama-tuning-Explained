@@ -9,6 +9,9 @@ Llama-Efficient-Tuning-相关代码，逐行详解版。
 
 * [src/](./src)
   * [api_demo.py](/src/api_demo.py)
+* [src/](./src)
+  * [/src/llmtuner/tuner/tune.py](/src/llmtuner/tuner/tune.py)  主要微调模块
+
   
 
 
