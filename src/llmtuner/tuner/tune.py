@@ -1,24 +1,22 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional  # 从 `typing` 模块导入类型标注工具
+from llmtuner.extras.callbacks import LogCallback               # 从 `llmtuner.extras.callbacks` 模块导入 `LogCallback` 类
+from llmtuner.extras.logging import get_logger                  # 从 `llmtuner.extras.logging` 模块导入 `get_logger` 函数
+from llmtuner.tuner.core import get_train_args, load_model_and_tokenizer   # 从 `llmtuner.tuner.core` 模块导入 `get_train_args` 和 `load_model_and_tokenizer` 函数
+from llmtuner.tuner.pt import run_pt                            # 从 `llmtuner.tuner.pt` 模块导入 `run_pt` 函数
+from llmtuner.tuner.sft import run_sft                          # 从 `llmtuner.tuner.sft` 模块导入 `run_sft` 函数
+from llmtuner.tuner.rm import run_rm                            # 从 `llmtuner.tuner.rm` 模块导入 `run_rm` 函数
+from llmtuner.tuner.ppo import run_ppo                          # 从 `llmtuner.tuner.ppo` 模块导入 `run_ppo` 函数
+from llmtuner.tuner.dpo import run_dpo                          # 从 `llmtuner.tuner.dpo` 模块导入 `run_dpo` 函数
 
-from llmtuner.extras.callbacks import LogCallback
-from llmtuner.extras.logging import get_logger
-from llmtuner.tuner.core import get_train_args, load_model_and_tokenizer
-from llmtuner.tuner.pt import run_pt
-from llmtuner.tuner.sft import run_sft
-from llmtuner.tuner.rm import run_rm
-from llmtuner.tuner.ppo import run_ppo
-from llmtuner.tuner.dpo import run_dpo
+if TYPE_CHECKING:                                               # 仅当进行类型检查时
+    from transformers import TrainerCallback                    # 从 `transformers` 模块导入 `TrainerCallback` 类
 
-if TYPE_CHECKING:
-    from transformers import TrainerCallback
+logger = get_logger(__name__)                                   # 调用 `get_logger` 函数并传入当前模块的名称，返回一个日志对象
 
+def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["TrainerCallback"]] = None):   # 定义一个函数 `run_exp`
+    model_args, data_args, training_args, finetuning_args, generating_args, general_args = get_train_args(args)  # 调用 `get_train_args`
+    callbacks = [LogCallback()] if callbacks is None else callbacks   # 判断 `callbacks` 是否是 `None`
 
-logger = get_logger(__name__)
-
-
-def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["TrainerCallback"]] = None):
-    model_args, data_args, training_args, finetuning_args, generating_args, general_args = get_train_args(args)
-    callbacks = [LogCallback()] if callbacks is None else callbacks
 
     if general_args.stage == "pt":
         run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
