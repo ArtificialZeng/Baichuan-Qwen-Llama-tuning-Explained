@@ -2462,11 +2462,14 @@ class NewType:
 Text = str
 
 
+# 注释描述了以下常量。
 # Constant that's True when type checking, but False here.
 TYPE_CHECKING = False
 
-
+# 定义了一个新的泛型类`IO`，它可以用`str`或`bytes`参数化。
+# class IO(Generic[AnyStr]):
 class IO(Generic[AnyStr]):
+    # 文档字符串为类提供了详细描述。
     """Generic base class for TextIO and BinaryIO.
 
     This is an abstract, generic version of the return of open().
@@ -2479,8 +2482,10 @@ class IO(Generic[AnyStr]):
     way to track the other distinctions in the type system.
     """
 
+    # 这一行用于为类的实例定义允许的属性。
     __slots__ = ()
 
+    # 定义类的抽象属性。`IO`的子类预期将实现这些属性。
     @property
     @abstractmethod
     def mode(self) -> str:
@@ -2491,78 +2496,97 @@ class IO(Generic[AnyStr]):
     def name(self) -> str:
         pass
 
+    # 定义了一个名为`close`的抽象方法，这里没有体，预期子类将实现。
     @abstractmethod
     def close(self) -> None:
         pass
 
+    # 另一个抽象属性`closed`。
     @property
     @abstractmethod
     def closed(self) -> bool:
         pass
 
+    # 另一个抽象方法`fileno`。
     @abstractmethod
     def fileno(self) -> int:
         pass
 
+    # 另一个抽象方法`flush`。
     @abstractmethod
     def flush(self) -> None:
         pass
 
+    # 另一个抽象方法`isatty`。
     @abstractmethod
     def isatty(self) -> bool:
         pass
 
+    # 另一个抽象方法`read`。
     @abstractmethod
     def read(self, n: int = -1) -> AnyStr:
         pass
 
+    # 另一个抽象方法`readable`。
     @abstractmethod
     def readable(self) -> bool:
         pass
 
+    # 另一个抽象方法`readline`。
     @abstractmethod
     def readline(self, limit: int = -1) -> AnyStr:
         pass
 
+    # 另一个抽象方法`readlines`。
     @abstractmethod
     def readlines(self, hint: int = -1) -> List[AnyStr]:
         pass
 
+    # 另一个抽象方法`seek`。
     @abstractmethod
     def seek(self, offset: int, whence: int = 0) -> int:
         pass
 
+    # 另一个抽象方法`seekable`。
     @abstractmethod
     def seekable(self) -> bool:
         pass
 
+    # 另一个抽象方法`tell`。
     @abstractmethod
     def tell(self) -> int:
         pass
 
+    # 另一个抽象方法`truncate`。
     @abstractmethod
     def truncate(self, size: int = None) -> int:
         pass
 
+    # 另一个抽象方法`writable`。
     @abstractmethod
     def writable(self) -> bool:
         pass
 
+    # 另一个抽象方法`write`。
     @abstractmethod
     def write(self, s: AnyStr) -> int:
         pass
 
+    # 另一个抽象方法`writelines`。
     @abstractmethod
     def writelines(self, lines: List[AnyStr]) -> None:
         pass
 
+    # 特殊方法`__enter__`是一个抽象方法，表示`IO`可以与Python的`with`语句一起使用，但子类需要提供实际实现。
     @abstractmethod
     def __enter__(self) -> 'IO[AnyStr]':
         pass
 
+    # 类似地，`__exit__`方法被定义为抽象，表示该类可以在上下文管理器（`with`语句）中使用，子类应提供实际的清理/逻辑。
     @abstractmethod
     def __exit__(self, type, value, traceback) -> None:
         pass
+
 
 
 class BinaryIO(IO[bytes]):
