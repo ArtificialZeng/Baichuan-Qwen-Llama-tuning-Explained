@@ -16,7 +16,8 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class Seq2SeqPeftTrainer(PeftTrainer):
+class CustomSeq2SeqTrainer(Seq2SeqTrainer):
+    # 说明: 这个类继承自Seq2SeqTrainer，主要用于计算生成指标如BLEU和ROUGE。
     r"""
     Inherits PeftTrainer to compute generative metrics such as BLEU and ROUGE.
     """
@@ -28,16 +29,32 @@ class Seq2SeqPeftTrainer(PeftTrainer):
         prediction_loss_only: bool,
         ignore_keys: Optional[List[str]] = None,
     ) -> Tuple[Optional[float], Optional[torch.Tensor], Optional[torch.Tensor]]:
+        
+        # 说明: 这个方法主要任务是从生成的令牌中移除提示部分。
+        # 用户可以通过子类化和重写此方法来实现自定义行为。
         r"""
         Removes the prompt part in the generated tokens.
 
         Subclass and override to inject custom behavior.
         """
-        prompt_len, label_len = inputs["input_ids"].size(-1), inputs["labels"].size(-1)
-        if prompt_len > label_len:
-            inputs["labels"] = self._pad_tensors_to_target_len(inputs["labels"], inputs["input_ids"])
-        if label_len > prompt_len:
-            inputs["input_ids"] = self._pad_tensors_to_target_len(inputs["input_ids"], inputs["labels"])
+
+        # 检查是否使用生成进行预测。
+        if self.args.predict_with_generate:
+            
+            # 断言：确保令牌化器的填充方向为左侧，且存在填充令牌ID。
+            assert self.tokenizer.padding_side == "left", "This method only accepts left-padded tensor."
+            assert self.tokenizer.pad_token_id is not None, "Pad token is required."
+            
+            # 获取输入的长度和标签的长度。
+            prompt_len, label_len = inputs["input_ids"].size(-1), inputs["labels"].size(-1)
+
+            # 确保输入和标签的长度相同，如果不是，则将短的那个填充至和长的那个一样长。
+            if prompt_len > label_len:
+                inputs["labels"] = self._pad_tensors_to_target_len(inputs["labels"], inputs["input_ids"])
+            if label_len > prompt_len:
+                inputs["input_ids"] = self._pad_tensors_to_target_len(inputs["input_ids"], inputs["labels"])
+
+            # 检查其他可能的输入部分，如attention_mask和position_ids，如果它们存在，也进行相同的调整。
             if "attention_mask" in inputs:
                 inputs["attention_mask"] = self._pad_tensors_to_target_len(
                     inputs["attention_mask"], inputs["labels"], pad_token_id=0
@@ -47,14 +64,19 @@ class Seq2SeqPeftTrainer(PeftTrainer):
                     inputs["position_ids"], inputs["labels"], pad_token_id=0
                 )
 
+        # 调用父类Seq2SeqTrainer的prediction_step方法来获得损失、生成的令牌和标签。
         loss, generated_tokens, labels = super().prediction_step(
             model, inputs, prediction_loss_only=prediction_loss_only, ignore_keys=ignore_keys
         )
-        generated_tokens = (
-            generated_tokens[:, max(prompt_len, label_len):] if generated_tokens is not None else None
-        )
 
-        return (loss, generated_tokens, labels)
+        # 如果生成的令牌不为空并且是使用生成进行的预测，移除生成的令牌中的提示部分，并确保张量是连续的。
+        if generated_tokens is not None and self.args.predict_with_generate:
+            generated_tokens[:, :max(prompt_len, label_len)] = self.tokenizer.pad_token_id
+            generated_tokens = generated_tokens.contiguous()
+
+        # 返回计算得到的损失、生成的令牌和标签。
+        return loss, generated_tokens, labels
+
 
     def _pad_tensors_to_target_len(
         self,

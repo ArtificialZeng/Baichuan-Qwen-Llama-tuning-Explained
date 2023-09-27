@@ -11,6 +11,12 @@ Llama-Efficient-Tuning-相关代码，逐行详解版。
   * [api_demo.py](/src/api_demo.py)
 * [src/](./src)
   * [/src/llmtuner/tuner/tune.py](/src/llmtuner/tuner/tune.py)  主要微调模块
+  * [/src/llmtuner/tuner/sft/trainer.py](/src/llmtuner/tuner/sft/trainer.py)
+    * const logger
+    * class CustomSeq2SeqTrainer
+      * func prediction_step
+      * func _pad_tensors_to_target_len
+      * func save_predictions
 
   
 
