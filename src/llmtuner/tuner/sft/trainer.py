@@ -84,48 +84,57 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         tgt_tensor: torch.Tensor,
         pad_token_id: Optional[int] = None
     ) -> torch.Tensor:
+        # 说明: 将 src_tensor 填充至与 tgt_tensor 相同的长度。
         r"""
         Pads the tensor to the same length as the target tensor.
-
-        Should only be called when predict_with_generate=True.
         """
-        if pad_token_id is None:
-            if self.tokenizer is not None and hasattr(self.tokenizer, "pad_token_id"):
-                assert self.tokenizer.padding_side == "left", "This method only accepts left-padded tensor."
-                pad_token_id = self.tokenizer.pad_token_id
-            else:
-                if self.model.config.pad_token_id is not None:
-                    pad_token_id = self.model.config.pad_token_id
-                else:
-                    raise ValueError("Pad_token_id must be set in the configuration of the model.")
-
+    
+        # 如果没有提供填充令牌ID，则使用类中的令牌化器的填充令牌ID。
+        pad_token_id = pad_token_id if pad_token_id is not None else self.tokenizer.pad_token_id
+        
+        # 创建一个与 tgt_tensor 形状相同的张量，但用填充令牌ID初始化。
         padded_tensor = pad_token_id * torch.ones_like(tgt_tensor)
+        
+        # 采用左填充的方式将 src_tensor 的值赋给新创建的填充张量。
         padded_tensor[:, -src_tensor.shape[-1]:] = src_tensor # adopt left-padding
+        # 确保返回的张量在内存中是连续的，并返回这个张量。
         return padded_tensor.contiguous() # in contiguous memory
 
     def save_predictions(
-        self,
-        predict_results: "PredictionOutput"
-    ) -> None:
+            self,
+            predict_results: "PredictionOutput"
+        ) -> None:
+        # 说明: 保存模型的预测结果到指定的输出目录。
         r"""
         Saves model predictions to `output_dir`.
 
         A custom behavior that not contained in Seq2SeqTrainer.
         """
+        
+        # 只在主进程中执行后续操作（在分布式训练中很重要，以避免多个进程重复保存）。
         if not self.is_world_process_zero():
             return
 
+        # 定义预测输出文件的路径。
         output_prediction_file = os.path.join(self.args.output_dir, "generated_predictions.jsonl")
+        # 记录一条日志消息。
         logger.info(f"Saving prediction results to {output_prediction_file}")
 
+        # 将预测和标签中的 IGNORE_INDEX 替换为填充令牌ID。
         preds = np.where(predict_results.predictions != IGNORE_INDEX, predict_results.predictions, self.tokenizer.pad_token_id)
         labels = np.where(predict_results.label_ids != IGNORE_INDEX, predict_results.label_ids, self.tokenizer.pad_token_id)
 
+        # 使用令牌化器对预测和标签进行批量解码。
         decoded_preds = self.tokenizer.batch_decode(preds, skip_special_tokens=True, clean_up_tokenization_spaces=True)
         decoded_labels = self.tokenizer.batch_decode(labels, skip_special_tokens=True, clean_up_tokenization_spaces=True)
 
+        # 打开预测输出文件以写入预测结果。
         with open(output_prediction_file, "w", encoding="utf-8") as writer:
+            # 对于每一个解码后的预测和标签，将其作为JSON字符串添加到结果列表中。
             res: List[str] = []
             for pred, label in zip(decoded_preds, decoded_labels):
                 res.append(json.dumps({"label": label, "predict": pred}, ensure_ascii=False))
+            # 将结果列表写入到文件中，每个结果占一行。
             writer.write("\n".join(res))
+
+
